@@ -55,5 +55,7 @@ done > "${top10_each3expids_path}"
 FTP_base="http://dbarchive.biosciencedbc.jp/kyushu-u/hg19/eachData/bed20/"
 cat "${top10_each3expids_path}" | while read line; do
   id=$(echo "${line}" | cut -f 1)
-  wget -O "${bed_dir}/${id}.bed" "${FTP_base}/${id}.20.bed" 2>/dev/null
+  wget -O - "${FTP_base}/${id}.20.bed" |\
+    awk -F '\t' 'BEGIN{ OFS="\t"; print "header" } $6 = "+"' \
+      > "${bed_dir}/${id}.bed" 2>/dev/null
 done
