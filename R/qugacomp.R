@@ -39,8 +39,7 @@ library("QuGAcomp")
 #
 # Download files
 #
-
-# TODO: download genome info file from github, and run script to get bed files
+system(paste("bash ", file.path(".", script.basename, "..", "bin", "update_datalist.sh")))
 
 #
 # Path to the data directory
