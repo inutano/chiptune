@@ -118,11 +118,11 @@ print(mat.cor.min)
 
 print(mat.cor)
 
-pdf("corrplot.pdf", width=5, height=5)
+pdf("corrplot.pdf")
 corrplot(mat.cor,
   method="circle",
   diag=FALSE,
   cl.lim=c(mat.cor.min, 1),
-  cl.ratio=0.5
+  cl.ratio=0.2
 )
 dev.off()
