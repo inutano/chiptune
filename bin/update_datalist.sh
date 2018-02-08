@@ -27,6 +27,12 @@ bed_dir="${data_dir}/bed"
 mkdir -p "${bed_dir}"
 
 #
+# Get genome length file from github
+#
+hg19_chrominfo_url="http://hgdownload.cse.ucsc.edu/goldenpath/hg19/database/chromInfo.txt.gz"
+curl "${hg19hg19_chrominfo_url}" | gunzip | awk -F '\t' '{ print $1 "\t" $2 }' > "${bed_dir}/hg19.info"
+
+#
 # Prepare the list of experiments
 #
 
