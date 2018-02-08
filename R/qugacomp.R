@@ -42,17 +42,17 @@ library("QuGAcomp")
 
 # TODO: download genome info file from github, and run script to get bed files
 
-
-#
-# List up IDs of target experiments
-#
-experiments <- c("DRX013180", "SRX003937", "SRX022562")
-
 #
 # Path to the data directory
 #
 bed.data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE), "bed")
 genome.length.file <- file.path(bed.data.dir, "hg19.info")
+
+#
+# List up IDs of target experiments
+#
+#experiments <- c("DRX013180", "SRX003937", "SRX022562")
+experiments <- system(paste("ls", bed.data.dir, "| grep .bed | sed -e 's:.bed$::'"), intern=TRUE)
 
 #
 # Load files and binning peak data
