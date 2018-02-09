@@ -30,7 +30,7 @@ mkdir -p "${bed_dir}"
 # Get genome length file from github
 #
 hg19_chrominfo_url="http://hgdownload.cse.ucsc.edu/goldenpath/hg19/database/chromInfo.txt.gz"
-curl "${hg19hg19_chrominfo_url}" | gunzip | awk -F '\t' '{ print $1 "\t" $2 }' > "${bed_dir}/hg19.info"
+curl "${hg19_chrominfo_url}" | gunzip | awk -F '\t' '$1 ~ /^chr(.|..)$/ { print $1 "\t" $2 }' > "${bed_dir}/hg19.info"
 
 #
 # Prepare the list of experiments
@@ -49,7 +49,7 @@ cat "${datalist_path}" | cut -f 4 | sort | uniq -c | sort -nr > "${ranking_path}
 
 # Top 10 TFs
 top10tfs_path="${data_dir}/top10.txt"
-head "${ranking_path}" | awk '$0=$2' > "${top10tfs_path}"
+cat "${ranking_path}" | awk '$1 > 4' | awk '$0=$2' > "${top10tfs_path}"
 
 # Get each 3 experiment IDs of top 10 TFs
 top10_each3expids_path="${data_dir}/top10_each3expids.tsv"
@@ -65,3 +65,6 @@ cat "${top10_each3expids_path}" | while read line; do
     awk -F '\t' 'BEGIN{ OFS="\t"; print "header" } $6 = "+"' \
       > "${bed_dir}/${id}.bed" 2>/dev/null
 done
+
+# Remove bed files with no peaks
+find "${bed_dir}" | awk '/bed$/' | xargs wc -l | awk '$1 == 1 { print $2 }' | xargs rm
