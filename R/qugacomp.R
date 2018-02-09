@@ -58,6 +58,7 @@ experiments <- system(paste("ls", bed.data.dir, "| grep .bed | sed -e 's:.bed$::
 #
 for (exp in experiments) {
   bed.file <- file.path(bed.data.dir, paste(exp, "bed", sep="."))
+  print(bed.file)
   gr <- loadBedFile(bed.file, genome.length.file)
   fat <- fat(gr, 200)
   unistd <- unifyStrand(fat)
