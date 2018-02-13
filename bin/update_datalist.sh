@@ -49,7 +49,7 @@ cat "${datalist_path}" | cut -f 4 | sort | uniq -c | sort -nr > "${ranking_path}
 
 # Top 10 TFs
 top10tfs_path="${data_dir}/top10.txt"
-cat "${ranking_path}" | awk '$1 > 4' | awk '$0=$2' > "${top10tfs_path}"
+cat "${ranking_path}" | awk '$1 > 4' | awk '$0=$2' | head -10 > "${top10tfs_path}"
 
 # Get each 3 experiment IDs of top 10 TFs
 top10_each3expids_path="${data_dir}/top10_each3expids.tsv"
