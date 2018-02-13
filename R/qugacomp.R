@@ -67,6 +67,7 @@ for (exp in experiments) {
   bin500 <- flatRleList(bin500)
   assign(paste(exp, "bin500", sep="."), bin500)
 }
+print("All bed files loaded. Exec QuGAcomp..")
 
 #
 # QuGAcomp for all pairs
@@ -86,6 +87,7 @@ for (i in 1:NROW(experiments)) {
     }
   }
 }
+print("Comparison done. Creating matrix..")
 
 #
 # Plot
@@ -98,6 +100,8 @@ rownames(mat.cor) <- experiments
 colnames(mat.cor) <- experiments
 diag(mat.cor) <- rep(1,num)
 
+print("Matrix created. Calculating correlation..")
+
 # Calculate Pearson's correlation coefficient
 for (i in 1:NROW(experiments)) {
   left <- experiments[i]
@@ -108,6 +112,8 @@ for (i in 1:NROW(experiments)) {
     }
   }
 }
+
+print("Calculation done. Preparing plotting..")
 
 # Draw plot and save to pdf
 mat.cor.max <- max(mat.cor[upper.tri(mat.cor, diag=F)])
