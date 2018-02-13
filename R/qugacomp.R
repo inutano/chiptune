@@ -12,11 +12,11 @@ script.basename <- dirname(script.name)
 #
 # Package update, install, and load
 #
-update.packages(checkBuilt=TRUE, ask=FALSE)
+update.packages(checkBuilt=TRUE, ask=FALSE, repos="https://cran.ism.ac.jp/")
 
 # Corrplot
 if (!require("corrplot")) {
-  install.packages("corrplot")
+  install.packages("corrplot", repos="https://cran.ism.ac.jp/")
 }
 library("corrplot")
 
@@ -26,7 +26,7 @@ if (!require("QuGAcomp")) {
   source("https://bioconductor.org/biocLite.R")
   biocLite("GenomicRanges")
   # Install curl package
-  install.packages("curl")
+  install.packages("curl", repos="https://cran.ism.ac.jp/")
   library("curl")
   # QuGAcomp from source file
   qugacomp.package.url <- "https://github.com/dritoshi/QuGAcomp/raw/master/QuGAcomp_0.99.2.tar.gz"
