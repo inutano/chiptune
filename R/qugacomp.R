@@ -124,7 +124,11 @@ print(mat.cor.min)
 
 print(mat.cor)
 
-pdf("corrplot.pdf")
+analysis.dir.path <- file.path(".", script.basename, "..", "analysis", "corrplot")
+today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
+output.pdf.name <- paste("corrplot", today, "pdf", sep=".")
+output.pdf.path <- file.path(analysis.dir.path, output.pdf.name)
+pdf(output.pdf.path)
 corrplot(mat.cor,
   method="circle",
   diag=FALSE,
