@@ -36,6 +36,13 @@ if (!require("QuGAcomp")) {
 }
 library("QuGAcomp")
 
+# pforeach
+if (!require("pforeach")) {
+  install.packages("devtools", repos="https://cran.ism.ac.jp/")
+  devtools::install_github("hoxo-m/pforeach")
+}
+library("pforeach")
+
 #
 # Download files
 #
@@ -57,8 +64,7 @@ exps.num <- NROW(experiments)
 #
 # Load files and binning peak data
 #
-bin500.vec <- vector("list", exps.num)
-for (i in 1:exps.num) {
+bin500.list <- pforeach (i = 1:exps.num) ({
   exp <- experiments[i]
   bed.file <- file.path(bed.data.dir, paste(exp, "bed", sep="."))
   gr <- loadBedFile(bed.file, genome.length.file)
@@ -66,9 +72,8 @@ for (i in 1:exps.num) {
   unistd <- unifyStrand(fat)
   cov <- coverage(unistd)
   bin500 <- lapply(cov, function(x)rleBinning(x, 500))
-  bin500 <- flatRleList(bin500)
-  bin500.vec[i] <- bin500
-}
+  list(flatRleList(bin500))
+})
 print("All bed files loaded. Exec QuGAcomp and correlation calculation..")
 
 #
@@ -85,7 +90,7 @@ diag(mat.cor) <- rep(1,exps.num)
 for (i in 1:exps.num) {
   for (j in i:exps.num) {
     if (j > i) {
-      mat.cor[i, j] <- mat.cor[j, i] <- pearsonCoef(qugacomp(bin500.vec[[i]], bin500.vec[[j]]))
+      mat.cor[i, j] <- mat.cor[j, i] <- pearsonCoef(qugacomp(bin500.list[[i]], bin500.list[[j]]))
     }
   }
 }
