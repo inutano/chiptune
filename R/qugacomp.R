@@ -56,16 +56,17 @@ experiments <- system(paste("ls", bed.data.dir, "| grep '.bed$' | sed -e 's:.bed
 #
 # Load files and binning peak data
 #
-for (exp in experiments) {
+bin500.vec <- vector("list", NROW(experiments))
+for (i in 1:NROW(experiments)) {
+  exp <- experiments[i]
   bed.file <- file.path(bed.data.dir, paste(exp, "bed", sep="."))
-  print(bed.file)
   gr <- loadBedFile(bed.file, genome.length.file)
   fat <- fat(gr, 200)
   unistd <- unifyStrand(fat)
   cov <- coverage(unistd)
   bin500 <- lapply(cov, function(x)rleBinning(x, 500))
   bin500 <- flatRleList(bin500)
-  assign(paste(exp, "bin500", sep="."), bin500)
+  bin500.vec[i] <- bin500
 }
 print("All bed files loaded. Exec QuGAcomp..")
 
@@ -73,15 +74,16 @@ print("All bed files loaded. Exec QuGAcomp..")
 # QuGAcomp for all pairs
 #
 for (i in 1:NROW(experiments)) {
-  left <- experiments[i]
+  i.name <- experiments[i]
   for (j in i:NROW(experiments)) {
     if (j > i) {
-      right <- experiments[j]
+      j.name <- experiments[j]
+
       assign(
-        paste("quga", left, right, sep="."),
+        paste("quga", i.name, j.name, sep="."),
         qugacomp(
-          get(paste(left, "bin500", sep=".")),
-          get(paste(right, "bin500", sep="."))
+          bin500.vec[[i]],
+          bin500.vec[[j]]
         )
       )
     }
