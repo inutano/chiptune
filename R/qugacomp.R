@@ -52,12 +52,13 @@ genome.length.file <- file.path(bed.data.dir, "hg19.info")
 #
 #experiments <- c("DRX013180", "SRX003937", "SRX022562")
 experiments <- system(paste("ls", bed.data.dir, "| grep '.bed$' | sed -e 's:.bed$::'"), intern=TRUE)
+exps.num <- NROW(experiments)
 
 #
 # Load files and binning peak data
 #
-bin500.vec <- vector("list", NROW(experiments))
-for (i in 1:NROW(experiments)) {
+bin500.vec <- vector("list", exps.num)
+for (i in 1:exps.num) {
   exp <- experiments[i]
   bed.file <- file.path(bed.data.dir, paste(exp, "bed", sep="."))
   gr <- loadBedFile(bed.file, genome.length.file)
@@ -68,54 +69,31 @@ for (i in 1:NROW(experiments)) {
   bin500 <- flatRleList(bin500)
   bin500.vec[i] <- bin500
 }
-print("All bed files loaded. Exec QuGAcomp..")
+print("All bed files loaded. Exec QuGAcomp and correlation calculation..")
 
 #
 # QuGAcomp for all pairs
 #
-for (i in 1:NROW(experiments)) {
-  i.name <- experiments[i]
-  for (j in i:NROW(experiments)) {
-    if (j > i) {
-      j.name <- experiments[j]
 
-      assign(
-        paste("quga", i.name, j.name, sep="."),
-        qugacomp(
-          bin500.vec[[i]],
-          bin500.vec[[j]]
-        )
-      )
+# Prepare matrix
+mat.cor <- matrix(0, nrow=exps.num, ncol=exps.num)
+rownames(mat.cor) <- experiments
+colnames(mat.cor) <- experiments
+diag(mat.cor) <- rep(1,exps.num)
+
+# Comparison and calculation for each cell of the matrix
+for (i in 1:exps.num) {
+  for (j in i:exps.num) {
+    if (j > i) {
+      mat.cor[i, j] <- mat.cor[j, i] <- pearsonCoef(qugacomp(bin500.vec[[i]], bin500.vec[[j]]))
     }
   }
 }
-print("Comparison done. Creating matrix..")
+print("Calculation done. Preparing plotting..")
 
 #
 # Plot
 #
-
-# Prepare matrix
-num <- NROW(experiments)
-mat.cor <- matrix(0, nrow=num, ncol=num)
-rownames(mat.cor) <- experiments
-colnames(mat.cor) <- experiments
-diag(mat.cor) <- rep(1,num)
-
-print("Matrix created. Calculating correlation..")
-
-# Calculate Pearson's correlation coefficient
-for (i in 1:NROW(experiments)) {
-  left <- experiments[i]
-  for (j in i:NROW(experiments)) {
-    if (j > i) {
-      right <- experiments[j]
-      mat.cor[i, j] <- mat.cor[j, i] <- pearsonCoef(get(paste("quga", left, right, sep=".")))
-    }
-  }
-}
-
-print("Calculation done. Preparing plotting..")
 
 # Draw plot and save to pdf
 mat.cor.max <- max(mat.cor[upper.tri(mat.cor, diag=F)])
