@@ -80,20 +80,25 @@ print("All bed files loaded. Exec QuGAcomp and correlation calculation..")
 # QuGAcomp for all pairs
 #
 
-# Prepare matrix
-mat.cor <- matrix(0, nrow=exps.num, ncol=exps.num)
+# Comparison and calculation for each cell of the matrix
+mat.cor <- pforeach(i = 1:exps.num, .combine=cbind) ({
+  foreach (j = 1:exps.num) %do% {
+    if (i > j) {
+      pearsonCoef(qugacomp(bin500.list[[i]], bin500.list[[j]]))
+    }
+  }
+})
+#}
+
+# Configure matrix
+mat.cor <- matrix(sapply(mat.cor, as.numeric), nrow=exps.num, ncol=exps.num)
+storage.mode(mat.cor) <- "numeric"
+mat.cor[lower.tri(mat.cor)] <- t(mat.cor)[lower.tri(mat.cor)]
+
 rownames(mat.cor) <- experiments
 colnames(mat.cor) <- experiments
 diag(mat.cor) <- rep(1,exps.num)
 
-# Comparison and calculation for each cell of the matrix
-for (i in 1:exps.num) {
-  for (j in i:exps.num) {
-    if (j > i) {
-      mat.cor[i, j] <- mat.cor[j, i] <- pearsonCoef(qugacomp(bin500.list[[i]], bin500.list[[j]]))
-    }
-  }
-}
 print("Calculation done. Preparing plotting..")
 
 #
