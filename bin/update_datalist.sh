@@ -67,4 +67,4 @@ cat "${top10_each3expids_path}" | while read line; do
 done
 
 # Remove bed files with only 0/1 peak
-find "${bed_dir}" | awk '/bed$/' | xargs wc -l | awk '$1 < 2 { print $2 }' | xargs rm
+find "${bed_dir}" | awk '/bed$/' | xargs wc -l | awk '$1 < 3 { print $2 }' | xargs rm
