@@ -67,12 +67,18 @@ exps.num <- NROW(experiments)
 bin500.list <- pforeach (i = 1:exps.num) ({
   exp <- experiments[i]
   bed.file <- file.path(bed.data.dir, paste(exp, "bed", sep="."))
-  gr <- loadBedFile(bed.file, genome.length.file)
-  fat <- fat(gr, 200)
-  unistd <- unifyStrand(fat)
-  cov <- coverage(unistd)
-  bin500 <- lapply(cov, function(x)rleBinning(x, 500))
-  list(flatRleList(bin500))
+  list(
+    flatRleList(
+      lapply(
+        coverage(
+          unifyStrand(
+            fat(
+              loadBedFile(bed.file, genome.length.file), 200)
+          )
+        ), function(x)rleBinning(x, 500)
+      )
+    )
+  )
 })
 print("All bed files loaded. Exec QuGAcomp and correlation calculation..")
 
