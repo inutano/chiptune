@@ -99,23 +99,39 @@ print("All bed files loaded. Exec QuGAcomp and correlation calculation..")
 # QuGAcomp for all pairs
 #
 
-# Comparison and calculation for each cell of the matrix
-mat.cor <- pforeach(i = 1:exps.num, .combine=cbind) ({
-  foreach (j = 1:exps.num) %do% {
-    if (i > j) {
-      pearsonCoef(qugacomp(bin500.list[[i]], bin500.list[[j]]))
+createCorrMatrix <- function(exps.vec, bin.list){
+  mat.length <- NROW(exps.vec)
+
+  # Comparison and calculation for each cell of the matrix
+  mat <- pforeach(i = 1:mat.length, .combine=cbind) ({
+    foreach (j = 1:mat.length) %do% {
+      if (i > j) {
+        pearsonCoef(qugacomp(bin.list[[i]], bin.list[[j]]))
+      }
     }
-  }
-})
+  })
 
-# Configure matrix
-mat.cor <- matrix(sapply(mat.cor, as.numeric), nrow=exps.num, ncol=exps.num)
-storage.mode(mat.cor) <- "numeric"
-mat.cor[lower.tri(mat.cor)] <- t(mat.cor)[lower.tri(mat.cor)]
+  # Convert indices (list) to numeric
+  mat <- matrix(sapply(mat, as.numeric), nrow=mat.length, ncol=mat.length)
+  storage.mode(mat) <- "numeric"
 
-rownames(mat.cor) <- experiments
-colnames(mat.cor) <- experiments
-diag(mat.cor) <- rep(1,exps.num)
+  # Fill lower triangle
+  mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)]
+
+  # Apply names and diagonal
+  rownames(mat) <- exps.vec
+  colnames(mat) <- exps.vec
+  diag(mat) <- rep(1, mat.length)
+
+  # Return matrix
+  mat
+}
+
+corr.matrix.rds.file <- file.path(bed.data.dir, "corr.matrix.rds")
+if (!file.exists(corr.matrix.rds.file)) {
+  saveRDS(createCorrMatrix(experiments, bin500.list), corr.matrix.rds.file)
+}
+mat.cor <- readRDS(corr.matrix.rds.file)
 
 print("Calculation done. Preparing plotting..")
 
