@@ -64,22 +64,35 @@ exps.num <- NROW(experiments)
 #
 # Load files and binning peak data
 #
-bin500.list <- pforeach (i = 1:exps.num) ({
-  exp <- experiments[i]
-  bed.file <- file.path(bed.data.dir, paste(exp, "bed", sep="."))
-  list(
-    flatRleList(
-      lapply(
-        coverage(
-          unifyStrand(
-            fat(
-              loadBedFile(bed.file, genome.length.file), 200)
-          )
-        ), function(x)rleBinning(x, 500)
+loadAndBin <- function(data.dir, exps.vec, glength.file){
+  pforeach (i = 1:NROW(exps.vec)) ({
+    list(
+      flatRleList(
+        lapply(
+          coverage(
+            unifyStrand(
+              fat(
+                loadBedFile(
+                  file.path(data.dir, paste(exps.vec[i], "bed", sep=".")),
+                  genome.length.file
+                ),
+                200
+              )
+            )
+          ),
+          function(x)rleBinning(x, 500)
+        )
       )
     )
-  )
-})
+  })
+}
+
+bin500.rds.file <- file.path(bed.data.dir, "bin500.rds")
+if (!file.exists(bin500.rds.file)) {
+  saveRDS(loadAndBin(bed.data.dir, experiments, genome.length.file), bin500.rds.file)
+}
+bin500.list <- readRDS(bin500.rds.file)
+
 print("All bed files loaded. Exec QuGAcomp and correlation calculation..")
 
 #
