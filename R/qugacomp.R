@@ -88,7 +88,6 @@ mat.cor <- pforeach(i = 1:exps.num, .combine=cbind) ({
     }
   }
 })
-#}
 
 # Configure matrix
 mat.cor <- matrix(sapply(mat.cor, as.numeric), nrow=exps.num, ncol=exps.num)
@@ -108,11 +107,6 @@ print("Calculation done. Preparing plotting..")
 # Draw plot and save to pdf
 mat.cor.max <- max(mat.cor[upper.tri(mat.cor, diag=F)])
 mat.cor.min <- min(mat.cor[upper.tri(mat.cor, diag=F)])
-
-print(mat.cor.max)
-print(mat.cor.min)
-
-print(mat.cor)
 
 analysis.dir.path <- file.path(".", script.basename, "..", "analysis", "corrplot")
 today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
