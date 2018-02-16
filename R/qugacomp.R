@@ -4,24 +4,18 @@
 #
 # Get path to the directory of this script
 #
-initial.options <- commandArgs(trailingOnly = FALSE)
+initial.options <- commandArgs(trailingOnly=FALSE)
 file.arg.name <- "--file="
 script.name <- sub(file.arg.name, "", initial.options[grep(file.arg.name, initial.options)])
 script.basename <- dirname(script.name)
 
 #
-# Package update, install, and load
+# Package install and load
 #
-update.packages(checkBuilt=TRUE, ask=FALSE, repos="https://cran.ism.ac.jp/")
-
-# Corrplot
-if (!require("corrplot")) {
-  install.packages("corrplot", repos="https://cran.ism.ac.jp/")
-}
-library("corrplot")
 
 # QuGAcomp
 if (!require("QuGAcomp")) {
+  update.packages(checkBuilt=TRUE, ask=FALSE, repos="https://cran.ism.ac.jp/")
   # GenomicRanges from Bioconductor
   source("https://bioconductor.org/biocLite.R")
   biocLite("GenomicRanges")
@@ -42,6 +36,12 @@ if (!require("pforeach")) {
   devtools::install_github("hoxo-m/pforeach")
 }
 library("pforeach")
+
+# Corrplot
+if (!require("corrplot")) {
+  install.packages("corrplot", repos="https://cran.ism.ac.jp/")
+}
+library("corrplot")
 
 #
 # Download files
@@ -140,10 +140,13 @@ print("Calculation done. Preparing plotting..")
 #
 
 # Draw plot and save to pdf
-mat.cor.max <- max(mat.cor[upper.tri(mat.cor, diag=F)])
-mat.cor.min <- min(mat.cor[upper.tri(mat.cor, diag=F)])
+mat.cor.max <- max(mat.cor[upper.tri(mat.cor, diag=FALSE)])
+mat.cor.min <- min(mat.cor[upper.tri(mat.cor, diag=FALSE)])
 
+# Prepare directory to save corrplot
 analysis.dir.path <- file.path(".", script.basename, "..", "analysis", "corrplot")
+dir.create(analysis.dir.path, showWarnings=FALSE, recursive=TRUE)
+
 today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
 output.pdf.name <- paste("corrplot", today, "pdf", sep=".")
 output.pdf.path <- file.path(analysis.dir.path, output.pdf.name)
