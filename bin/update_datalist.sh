@@ -58,10 +58,11 @@ cat "${top10tfs_path}" | while read tf; do
 done > "${top10_each3expids_path}"
 
 # Get bedfiles of each experiment from NBDC web server
-FTP_base="http://dbarchive.biosciencedbc.jp/kyushu-u/hg19/eachData/bed20/"
+qval="20" # qvalue of macs2 peak call, 05 (1E-05), 10 (1E-10), 20 (1E-20) are available
+FTP_base="http://dbarchive.biosciencedbc.jp/kyushu-u/hg19/eachData/bed${qval}/"
 cat "${top10_each3expids_path}" | while read line; do
   id=$(echo "${line}" | cut -f 1)
-  wget -O - "${FTP_base}/${id}.20.bed" |\
+  wget -O - "${FTP_base}/${id}.${qval}.bed" |\
     awk -F '\t' 'BEGIN{ OFS="\t"; print "header" } $6 = "+"' \
       > "${bed_dir}/${id}.bed" 2>/dev/null
 done
