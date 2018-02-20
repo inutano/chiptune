@@ -1,4 +1,4 @@
-# A script to exec quantitative genome annotation comparison (QuGAcomp) https://github.com/dritoshi/QuGAcomp
+# chiptune/R/qugacomp.R: exec quantitative genome annotation comparison (QuGAcomp) https://github.com/dritoshi/QuGAcomp
 # Tested on bioconductor/release_base2:R3.4.3_Bioc3.6
 
 #
@@ -12,93 +12,16 @@ script.basename <- dirname(script.name)
 #
 # Package install and load
 #
-
-# QuGAcomp
-if (!require("QuGAcomp")) {
-  update.packages(checkBuilt=TRUE, ask=FALSE, repos="https://cran.ism.ac.jp/")
-  # GenomicRanges from Bioconductor
-  source("https://bioconductor.org/biocLite.R")
-  biocLite("GenomicRanges")
-  # Install curl package
-  install.packages("curl", repos="https://cran.ism.ac.jp/")
-  library("curl")
-  # QuGAcomp from source file
-  qugacomp.package.url <- "https://github.com/dritoshi/QuGAcomp/raw/master/QuGAcomp_0.99.2.tar.gz"
-  qugacomp.package.loc <- file.path(".", basename(qugacomp.package.url))
-  curl_download(qugacomp.package.url, qugacomp.package.loc)
-  install.packages(qugacomp.package.loc)
-}
-library("QuGAcomp")
-
-# pforeach
-if (!require("pforeach")) {
-  install.packages("devtools", repos="https://cran.ism.ac.jp/")
-  devtools::install_github("hoxo-m/pforeach")
-}
-library("pforeach")
-
-# Corrplot
-if (!require("corrplot")) {
-  install.packages("corrplot", repos="https://cran.ism.ac.jp/")
-}
-library("corrplot")
+source(file.path(".", script.basename, "setup.R"))
 
 #
-# Download files
+# Load bin data
 #
-system(paste("bash ", file.path(".", script.basename, "..", "bin", "update_datalist.sh")))
-
-#
-# Path to the data directory
-#
-bed.data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE), "bed")
-genome.length.file <- file.path(bed.data.dir, "hg19.info")
-
-#
-# List up IDs of target experiments
-#
-#experiments <- c("DRX013180", "SRX003937", "SRX022562")
-experiments <- system(paste("ls", bed.data.dir, "| grep '.bed$' | sed -e 's:.bed$::'"), intern=TRUE)
-exps.num <- NROW(experiments)
-
-#
-# Load files and binning peak data
-#
-loadAndBin <- function(data.dir, exps.vec, glength.file){
-  pforeach (i = 1:NROW(exps.vec)) ({
-    list(
-      flatRleList(
-        lapply(
-          coverage(
-            unifyStrand(
-              fat(
-                loadBedFile(
-                  file.path(data.dir, paste(exps.vec[i], "bed", sep=".")),
-                  genome.length.file
-                ),
-                200
-              )
-            )
-          ),
-          function(x)rleBinning(x, 500)
-        )
-      )
-    )
-  })
-}
-
-bin500.rds.file <- file.path(bed.data.dir, "bin500.rds")
-if (!file.exists(bin500.rds.file)) {
-  saveRDS(loadAndBin(bed.data.dir, experiments, genome.length.file), bin500.rds.file)
-}
-bin500.list <- readRDS(bin500.rds.file)
-
-print("All bed files loaded. Exec QuGAcomp and correlation calculation..")
+source(file.path(".", script.basename, "bed2bin.R"))
 
 #
 # QuGAcomp for all pairs
 #
-
 createCorrMatrix <- function(exps.vec, bin.list){
   mat.length <- NROW(exps.vec)
 
@@ -129,11 +52,11 @@ createCorrMatrix <- function(exps.vec, bin.list){
 
 corr.matrix.rds.file <- file.path(bed.data.dir, "corr.matrix.rds")
 if (!file.exists(corr.matrix.rds.file)) {
-  saveRDS(createCorrMatrix(experiments, bin500.list), corr.matrix.rds.file)
+  saveRDS(createCorrMatrix(experiments, bin.list), corr.matrix.rds.file)
 }
 mat.cor <- readRDS(corr.matrix.rds.file)
 
-print("Calculation done. Preparing plotting..")
+print("Correlation calculated. Preparing plotting..")
 
 #
 # Plot
@@ -157,4 +80,6 @@ corrplot(mat.cor,
   cl.lim=c(mat.cor.min, 1),
   cl.ratio=0.2
 )
-dev.off()
+invisible(dev.off())
+
+print(paste("The plot saved at", output.pdf.path))
