@@ -56,7 +56,9 @@ if (!file.exists(corr.matrix.rds.file)) {
 }
 mat.cor <- readRDS(corr.matrix.rds.file)
 
-print("Correlation calculated. Preparing plotting..")
+mat.cor.file <- file.path(bed.data.dir, "matrix.tsv")
+write.table(mat.cor, file=mat.cor.file, sep="\t", quote=FALSE)
+print(paste("Correlation calculated. Matrix saved at", mat.cor.file))
 
 #
 # Plot
