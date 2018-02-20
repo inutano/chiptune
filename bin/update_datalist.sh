@@ -7,6 +7,10 @@
 
 # qvalue of macs2 peak call, bed files are avaiable for 05 (1E-05), 10 (1E-10), 20 (1E-20)
 QVAL=20
+# Number of TFs to download
+NumTFs=10
+# Number of bedfiles to download for each TF
+NumTFs_EACH=5
 
 #
 # Functions
@@ -55,20 +59,20 @@ curl -s ${experimentList_url} | awk -F'\t' '$2 == "hg19" && $3 == "TFs and other
 ranking_path="${data_dir}/ranking.txt"
 cat "${datalist_path}" | cut -f 4 | sort | uniq -c | sort -nr > "${ranking_path}"
 
-# Top 10 TFs
-top10tfs_path="${data_dir}/top10.txt"
-cat "${ranking_path}" | awk '$1 > 4' | awk '$0=$2' | head -10 > "${top10tfs_path}"
+# List to download
+tfs_to_download="${data_dir}/tfs_download.txt"
+cat "${ranking_path}" | awk '$0=$2' | head -n ${NumTFs} > "${tfs_to_download}"
 
-# Get each 3 experiment IDs of top 10 TFs
-top10_each3expids_path="${data_dir}/top10_each3expids.tsv"
-cat "${top10tfs_path}" | while read tf; do
-  cat "${datalist_path}" | awk -v tf="${tf}" -F '\t' '$4 == tf' | head -3
-done > "${top10_each3expids_path}"
+# Get experiment list
+experiments_to_download="${data_dir}/exps_download.txt"
+cat "${tfs_to_download}" | while read tf; do
+  cat "${datalist_path}" | awk -v tf="${tf}" -F '\t' '$4 == tf' | head -n ${NumTFs_EACH}
+done > "${experiments_to_download}"
 
 # Create lftp script and exec to download bed files
 lftp_script_path="${data_dir}/download_bed.lftp"
 FTP_base="ftp://ftp.biosciencedbc.jp/data/chip-atlas/data/hg19/eachData/bed${QVAL}/"
-cat "${top10_each3expids_path}" |\
+cat "${experiments_to_download}" |\
   awk -F '\t' -v qval="${QVAL}" -v ftp="${FTP_base}" -v outdir="${bed_dir}" 'BEGIN{ print "open " ftp } { print "pget -n 8 -O " outdir " " $1 "." qval ".bed" }' > "${lftp_script_path}"
 lftp -f "${lftp_script_path}"
 
