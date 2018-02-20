@@ -1,4 +1,12 @@
 #!/bin/bash
+# require: curl, lftp
+
+#
+# Variables
+#
+
+# qvalue of macs2 peak call, bed files are avaiable for 05 (1E-05), 10 (1E-10), 20 (1E-20)
+QVAL=20
 
 #
 # Functions
@@ -57,15 +65,20 @@ cat "${top10tfs_path}" | while read tf; do
   cat "${datalist_path}" | awk -v tf="${tf}" -F '\t' '$4 == tf' | head -3
 done > "${top10_each3expids_path}"
 
-# Get bedfiles of each experiment from NBDC web server
-qval="20" # qvalue of macs2 peak call, 05 (1E-05), 10 (1E-10), 20 (1E-20) are available
-FTP_base="http://dbarchive.biosciencedbc.jp/kyushu-u/hg19/eachData/bed${qval}/"
-cat "${top10_each3expids_path}" | while read line; do
-  id=$(echo "${line}" | cut -f 1)
-  wget -O - "${FTP_base}/${id}.${qval}.bed" |\
-    awk -F '\t' 'BEGIN{ OFS="\t"; print "header" } $6 = "+"' \
-      > "${bed_dir}/${id}.bed" 2>/dev/null
+# Create lftp script and exec to download bed files
+lftp_script_path="${data_dir}/download_bed.lftp"
+FTP_base="ftp://ftp.biosciencedbc.jp/data/chip-atlas/data/hg19/eachData/bed${QVAL}/"
+cat "${top10_each3expids_path}" |\
+  awk -F '\t' -v qval="${QVAL}" -v ftp="${FTP_base}" -v outdir="${bed_dir}" 'BEGIN{ print "open " ftp } { print "pget -n 8 -O " outdir " " $1 "." qval ".bed" }' > "${lftp_script_path}"
+lftp -f "${lftp_script_path}"
+
+# edit bed files
+ls "${bed_dir}" | grep 'bed$' | while read bed; do
+  id=$(echo "${bed}" | sed -e 's:\..*$::g')
+  cat "${bed_dir}/${bed}" | awk -F '\t' 'BEGIN{ OFS="\t"; print "header" } $6 = "+"' \
+    > "${bed_dir}/${id}.bed"
+  rm -f "${bed_dir}/${bed}"
 done
 
 # Remove bed files with only 0/1 peak
-find "${bed_dir}" | awk '/bed$/' | xargs wc -l | awk '$1 < 3 { print $2 }' | xargs rm
+find "${bed_dir}" | awk '/\.bed$/' | xargs wc -l | awk '$1 < 3 { print $2 }' | xargs rm
