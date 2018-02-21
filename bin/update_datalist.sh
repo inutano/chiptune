@@ -54,6 +54,7 @@ experimentList_url="http://dbarchive.biosciencedbc.jp/kyushu-u/metadata/experime
 # Select ChIP-seq experiments of human TFs
 datalist_path="${data_dir}/data.tsv"
 curl -s ${experimentList_url} | awk -F'\t' '$2 == "hg19" && $3 == "TFs and others"' > "${datalist_path}"
+awk -F'\t' 'BEGIN{ OFS="\t" }{ print $1, $4, $5, $6 }' > "${data_dir}/data.reduced.tsv"
 
 # The TF experiment ranking
 ranking_path="${data_dir}/ranking.txt"
