@@ -106,7 +106,7 @@ metadata <- read.delim(file.path(script.basename, "..", "data", "data.tsv"), hea
 # Create matrix for each TF
 x <- pforeach(tf = 1:NROW(tfs.vec)) ({
   # Create submatrix
-  tf.exps <- metadata[metadata$V4 == tf]$V1
+  tf.exps <- metadata[metadata$V4 == tf,]$V1
   tf.mat <- mat.cor[rownames(mat.cor) %in% tf.exps, colnames(mat.cor) %in% tf.exps]
 
   # Save in tsv
