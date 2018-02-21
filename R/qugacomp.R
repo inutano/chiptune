@@ -10,9 +10,20 @@ script.name <- sub(file.arg.name, "", initial.options[grep(file.arg.name, initia
 script.basename <- dirname(script.name)
 
 #
+# Timestamp
+#
+today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
+
+#
 # Package install and load
 #
 source(file.path(".", script.basename, "setup.R"))
+
+#
+# Create a directory to save results
+#
+analysis.dir.path <- file.path(".", script.basename, "..", "analysis", "corrplot")
+dir.create(analysis.dir.path, showWarnings=FALSE, recursive=TRUE)
 
 #
 # Load bin data
@@ -61,19 +72,15 @@ write.table(mat.cor, file=mat.cor.file, sep="\t", quote=FALSE)
 print(paste("Correlation calculated. Matrix saved at", mat.cor.file))
 
 #
-# Plot
+# Plot all for all
 #
 
-# Draw plot and save to pdf
+# max/min
 mat.cor.max <- max(mat.cor[upper.tri(mat.cor, diag=FALSE)])
 mat.cor.min <- min(mat.cor[upper.tri(mat.cor, diag=FALSE)])
 
-# Prepare directory to save corrplot
-analysis.dir.path <- file.path(".", script.basename, "..", "analysis", "corrplot")
-dir.create(analysis.dir.path, showWarnings=FALSE, recursive=TRUE)
-
-today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
-output.pdf.name <- paste("corrplot", today, "pdf", sep=".")
+# Draw plot and save to pdf
+output.pdf.name <- paste("all", "corrplot", today, "pdf", sep=".")
 output.pdf.path <- file.path(analysis.dir.path, output.pdf.name)
 pdf(output.pdf.path)
 corrplot(mat.cor,
@@ -85,3 +92,42 @@ corrplot(mat.cor,
 invisible(dev.off())
 
 print(paste("The plot saved at", output.pdf.path))
+
+#
+# Plot per TF
+#
+
+# Get the list of TFs
+tfs.vec <- read.delim(file.path(script.basename, "..", "data", "tfs_download.txt"), header=FALSE)
+
+# Get the metadata table
+metadata <- read.delim(file.path(script.basename, "..", "data", "data.tsv"), header=FALSE)
+
+# Create matrix for each TF
+x <- pforeach(tf = 1:NROW(tfs.vec)) ({
+  # Create submatrix
+  tf.exps <- metadata[metadata$V4 == tf]$V1
+  tf.mat <- mat.cor[rownames(mat.cor) %in% tf.exps, colnames(mat.cor) %in% tf.exps]
+
+  # Save in tsv
+  tf.mat.file.path <- file.path(bed.data.dir, paste(tf, "matrix.tsv", sep="."))
+  write.table(tf.mat, file=tf.mat.file.path, sep="\t", quote=FALSE)
+
+  # Plot
+  tf.mat.max <- max(tf.mat[upper.tri(tf.mat, diag=FALSE)])
+  tf.mat.min <- min(tf.mat[upper.tri(tf.mat, diag=FALSE)])
+
+  # Output PDF file path
+  tf.output.pdf.name <- paste(tf, "corrplot", today, "pdf", sep=".")
+  tf.output.pdf.path <- file.path(analysis.dir.path, tf.output.pdf.name)
+
+  # Draw plot and save
+  pdf(tf.output.pdf.path)
+  corrplot(tf.mat,
+    method="circle",
+    diag=FALSE,
+    cl.lim=c(tf.mat.min, 1),
+    cl.ratio=0.2
+  )
+  invisible(dev.off())
+})
