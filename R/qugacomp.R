@@ -20,15 +20,22 @@ today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
 source(file.path(".", script.basename, "setup.R"))
 
 #
-# Create a directory to save results
-#
-analysis.dir.path <- file.path(".", script.basename, "..", "analysis", "corrplot")
-dir.create(analysis.dir.path, showWarnings=FALSE, recursive=TRUE)
-
-#
 # Load bin data
 #
 source(file.path(".", script.basename, "bed2bin.R"))
+
+#
+# Create a directory to save results
+#
+analysis.dir <- file.path(data.dir, "analysis", today)
+dir.create(analysis.dir, showWarnings=FALSE, recursive=TRUE)
+
+corrplot.dir <- file.path(analysis.dir, "corrplot")
+dir.create(corrplot.dir, showWarnings=FALSE, recursive=TRUE)
+
+matrix.dir <- file.path(analysis.dir, "matrix")
+dir.create(matrix.dir, showWarnings=FALSE, recursive=TRUE)
+
 
 #
 # QuGAcomp for all pairs
@@ -61,13 +68,13 @@ createCorrMatrix <- function(exps.vec, bin.list){
   mat
 }
 
-corr.matrix.rds.file <- file.path(bed.data.dir, "corr.matrix.rds")
+corr.matrix.rds.file <- file.path(rds.dir, "corr.matrix.rds")
 if (!file.exists(corr.matrix.rds.file)) {
   saveRDS(createCorrMatrix(experiments, bin.list), corr.matrix.rds.file)
 }
 mat.cor <- readRDS(corr.matrix.rds.file)
 
-mat.cor.file <- file.path(bed.data.dir, "matrix.tsv")
+mat.cor.file <- file.path(matrix.dir, "all.matrix.tsv")
 write.table(mat.cor, file=mat.cor.file, sep="\t", quote=FALSE)
 print(paste("Correlation calculated. Matrix saved at", mat.cor.file))
 
@@ -80,8 +87,8 @@ mat.cor.max <- max(mat.cor[upper.tri(mat.cor, diag=FALSE)])
 mat.cor.min <- min(mat.cor[upper.tri(mat.cor, diag=FALSE)])
 
 # Draw plot and save to pdf
-output.pdf.name <- paste("all", "corrplot", today, "pdf", sep=".")
-output.pdf.path <- file.path(analysis.dir.path, output.pdf.name)
+output.pdf.name <- paste("all", "corrplot", "pdf", sep=".")
+output.pdf.path <- file.path(corrplot.dir, output.pdf.name)
 pdf(output.pdf.path)
 corrplot(mat.cor,
   method="circle",
@@ -98,19 +105,20 @@ print(paste("The plot saved at", output.pdf.path))
 #
 
 # Get the list of TFs
-tfs.vec <- read.delim(file.path(script.basename, "..", "data", "tfs_download.txt"), header=FALSE)
+tfs.vec <- readLines(file.path(data.dir, "tfs_download.txt"))
 
 # Get the metadata table
-metadata <- read.delim(file.path(script.basename, "..", "data", "data.tsv"), header=FALSE)
+metadata <- read.delim(file.path(data.dir, "data.reduced.tsv"), header=FALSE)
 
 # Create matrix for each TF
-x <- pforeach(tf = 1:NROW(tfs.vec)) ({
+x <- pforeach(i = 1:NROW(tfs.vec)) ({
   # Create submatrix
-  tf.exps <- metadata[metadata$V4 == tf,]$V1
+  tf <- tfs.vec[i]
+  tf.exps <- metadata[metadata$V2 == tf,]$V1
   tf.mat <- mat.cor[rownames(mat.cor) %in% tf.exps, colnames(mat.cor) %in% tf.exps]
 
   # Save in tsv
-  tf.mat.file.path <- file.path(bed.data.dir, paste(tf, "matrix.tsv", sep="."))
+  tf.mat.file.path <- file.path(matrix.dir, paste(tf, "matrix.tsv", sep="."))
   write.table(tf.mat, file=tf.mat.file.path, sep="\t", quote=FALSE)
 
   # Plot
@@ -118,8 +126,8 @@ x <- pforeach(tf = 1:NROW(tfs.vec)) ({
   tf.mat.min <- min(tf.mat[upper.tri(tf.mat, diag=FALSE)])
 
   # Output PDF file path
-  tf.output.pdf.name <- paste(tf, "corrplot", today, "pdf", sep=".")
-  tf.output.pdf.path <- file.path(analysis.dir.path, tf.output.pdf.name)
+  tf.output.pdf.name <- paste(tf, "corrplot", "pdf", sep=".")
+  tf.output.pdf.path <- file.path(corrplot.dir, tf.output.pdf.name)
 
   # Draw plot and save
   pdf(tf.output.pdf.path)

@@ -17,8 +17,12 @@ source(file.path(".", script.basename, "setup.R"))
 #
 # Path to the data directory (use latest-downloaded data)
 #
-bed.data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE), "bed")
+data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE))
+bed.data.dir <- file.path(data.dir, "bed")
 genome.length.file <- file.path(bed.data.dir, "hg19.info")
+
+rds.dir <- file.path(data.dir, "rds")
+dir.create(rds.dir, showWarnings=FALSE, recursive=TRUE)
 
 #
 # List up IDs of target experiments (all the bed files in the directory)
@@ -59,7 +63,7 @@ loadAndBin <- function(data.dir, exps.vec, glength.file){
   })
 }
 
-bin.rds.file <- file.path(bed.data.dir, "bin.rds")
+bin.rds.file <- file.path(rds.dir, "bin.rds")
 if (!file.exists(bin.rds.file)) {
   saveRDS(loadAndBin(bed.data.dir, experiments, genome.length.file), bin.rds.file)
 }
