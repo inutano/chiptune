@@ -40,24 +40,33 @@ bin.length <- 500
 #
 # Load files and binning peak data
 #
-loadAndBin <- function(data.dir, exps.vec, glength.file){
+
+loadAndBin <- function(bed.file.path, glength.file, fat.num){
+  flatRleList(
+    lapply(
+      coverage(
+        unifyStrand(
+          fat(
+            loadBedFile(
+              bed.file.path,
+              glength.file
+            ),
+            fat.num
+          )
+        )
+      ),
+      function(x)rleBinning(x, bin.length)
+    )
+  )
+}
+
+pLoadAndBin <- function(data.dir, exps.vec, glength.file, fat.num){
   pforeach (i = 1:NROW(exps.vec)) ({
     list(
-      flatRleList(
-        lapply(
-          coverage(
-            unifyStrand(
-              fat(
-                loadBedFile(
-                  file.path(data.dir, paste(exps.vec[i], "bed", sep=".")),
-                  genome.length.file
-                ),
-                fat.num
-              )
-            )
-          ),
-          function(x)rleBinning(x, bin.length)
-        )
+      loadAndBin(
+        file.path(data.dir, paste(exps.vec[i], "bed", sep=".")),
+        glength.file,
+        fat.num
       )
     )
   })
@@ -65,7 +74,7 @@ loadAndBin <- function(data.dir, exps.vec, glength.file){
 
 bin.rds.file <- file.path(rds.dir, "bin.rds")
 if (!file.exists(bin.rds.file)) {
-  saveRDS(loadAndBin(bed.data.dir, experiments, genome.length.file), bin.rds.file)
+  saveRDS(pLoadAndBin(bed.data.dir, experiments, genome.length.file, fat.num), bin.rds.file)
 }
 bin.list <- readRDS(bin.rds.file)
 
