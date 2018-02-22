@@ -27,14 +27,18 @@ source(file.path(".", script.basename, "bed2bin.R"))
 #
 # Create a directory to save results
 #
+tfs.rds.dir <- file.path(rds.dir, "eachTF")
+dir.create(tfs.rds.dir, showWarnings=FALSE, recursive=TRUE)
+
 analysis.dir <- file.path(data.dir, "analysis", today)
 dir.create(analysis.dir, showWarnings=FALSE, recursive=TRUE)
 
 corrplot.dir <- file.path(analysis.dir, "corrplot")
 dir.create(corrplot.dir, showWarnings=FALSE, recursive=TRUE)
 
-matrix.dir <- file.path(analysis.dir, "matrix")
-dir.create(matrix.dir, showWarnings=FALSE, recursive=TRUE)
+matrix.dir <- file.path(data.dir, "matrix")
+tfs.matrix.dir <- file.path(matrix.dir, "eachTF")
+dir.create(tfs.matrix.dir, showWarnings=FALSE, recursive=TRUE)
 
 
 #
@@ -68,16 +72,17 @@ createCorrMatrix <- function(exps.vec, bin.list){
   mat
 }
 
-corr.matrix.rds.file <- file.path(rds.dir, "corr.matrix.rds")
-if (!file.exists(corr.matrix.rds.file)) {
+all.matrix.rds.file <- file.path(rds.dir, "all.matrix.rds")
+if (!file.exists(all.matrix.rds.file)) {
   bin.list <- readRDS(bin.rds.file)
-  saveRDS(createCorrMatrix(experiments, bin.list), corr.matrix.rds.file)
-}
-mat.cor <- readRDS(corr.matrix.rds.file)
+  saveRDS(createCorrMatrix(experiments, bin.list), all.matrix.rds.file)
 
-mat.cor.file <- file.path(matrix.dir, "all.matrix.tsv")
-write.table(mat.cor, file=mat.cor.file, sep="\t", quote=FALSE)
-print(paste("Correlation calculated. Matrix saved at", mat.cor.file))
+  mat.cor.file <- file.path(matrix.dir, "all.matrix.tsv")
+  write.table(mat.cor, file=mat.cor.file, sep="\t", quote=FALSE)
+
+  print(paste("Correlation calculated. Matrix saved at", mat.cor.file))
+}
+mat.cor <- readRDS(all.matrix.rds.file)
 
 #
 # Plot all for all
@@ -115,12 +120,18 @@ metadata <- read.delim(file.path(data.dir, "data.reduced.tsv"), header=FALSE)
 x <- pforeach(i = 1:NROW(tfs.vec)) ({
   # Create submatrix
   tf <- tfs.vec[i]
-  tf.exps <- metadata[metadata$V2 == tf,]$V1
-  tf.mat <- mat.cor[rownames(mat.cor) %in% tf.exps, colnames(mat.cor) %in% tf.exps]
 
-  # Save in tsv
-  tf.mat.file.path <- file.path(matrix.dir, paste(tf, "matrix.tsv", sep="."))
-  write.table(tf.mat, file=tf.mat.file.path, sep="\t", quote=FALSE)
+  # Create or load matrix from RDS
+  tf.rds.file <- file.path(tfs.rds.dir, paste(tf, "rdfs", sep="."))
+  if (!file.exists(tf.rds.file)) {
+    tf.exps <- metadata[metadata$V2 == tf,]$V1
+    saveRDS(mat.cor[rownames(mat.cor) %in% tf.exps, colnames(mat.cor) %in% tf.exps], tf.rds.file)
+
+    # Save in tsv
+    tf.mat.file.path <- file.path(tfs.matrix.dir, paste(tf, "matrix.tsv", sep="."))
+    write.table(tf.mat, file=tf.mat.file.path, sep="\t", quote=FALSE)
+  }
+  tf.mat <- readRDS(tf.rds.file)
 
   # Plot
   tf.mat.max <- max(tf.mat[upper.tri(tf.mat, diag=FALSE)])
