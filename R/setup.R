@@ -43,3 +43,5 @@ if (!require("corrplot")) {
   install.packages("corrplot", repos="https://cran.ism.ac.jp/")
 }
 library("corrplot")
+
+sessionInfo()
