@@ -76,6 +76,5 @@ bin.rds.file <- file.path(rds.dir, "bin.rds")
 if (!file.exists(bin.rds.file)) {
   saveRDS(pLoadAndBin(bed.data.dir, experiments, genome.length.file, fat.num), bin.rds.file)
 }
-bin.list <- readRDS(bin.rds.file)
 
-print(paste(exps.num, "bed files loaded."))
+print(paste(exps.num, "bed files loaded and saved at", bin.rds.file))

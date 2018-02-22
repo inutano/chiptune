@@ -70,6 +70,7 @@ createCorrMatrix <- function(exps.vec, bin.list){
 
 corr.matrix.rds.file <- file.path(rds.dir, "corr.matrix.rds")
 if (!file.exists(corr.matrix.rds.file)) {
+  bin.list <- readRDS(bin.rds.file)
   saveRDS(createCorrMatrix(experiments, bin.list), corr.matrix.rds.file)
 }
 mat.cor <- readRDS(corr.matrix.rds.file)
