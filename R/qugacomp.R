@@ -68,15 +68,16 @@ all.matrix.rds.file <- file.path(rds.dir, "all.matrix.rds")
 if (!file.exists(all.matrix.rds.file)) {
   # Load bin file, run bed2bin if not rds file exists
   bin.rds.file <- file.path(rds.dir, "bin.rds")
-  if (!file.exist(bin.rds.file)) {
+  if (!file.exists(bin.rds.file)) {
     source(file.path(".", script.basename, "bed2bin.R"))
   }
   bin.list <- readRDS(bin.rds.file)
-  saveRDS(createCorrMatrix(experiments, bin.list), all.matrix.rds.file)
+  all.mat <- createCorrMatrix(experiments, bin.list)
+  saveRDS(all.mat, all.matrix.rds.file)
 
   # Save matrix
-  mat.cor.file <- file.path(matrix.dir, "all.matrix.tsv")
-  write.table(mat.cor, file=mat.cor.file, sep="\t", quote=FALSE)
+  all.mat.file <- file.path(matrix.dir, "all.matrix.tsv")
+  write.table(all.mat, file=all.mat.file, sep="\t", quote=FALSE)
 }
 
 #
@@ -98,7 +99,8 @@ x <- pforeach(i = 1:NROW(tfs.vec)) ({
   tf.rds.file <- file.path(tfs.rds.dir, paste(tf, "rdfs", sep="."))
   if (!file.exists(tf.rds.file)) {
     tf.exps <- metadata[metadata$V2 == tf,]$V1
-    saveRDS(mat.cor[rownames(mat.cor) %in% tf.exps, colnames(mat.cor) %in% tf.exps], tf.rds.file)
+    tf.mat <- all.mat[rownames(all.mat) %in% tf.exps, colnames(all.mat) %in% tf.exps]
+    saveRDS(tf.mat, tf.rds.file)
 
     # Save in tsv
     tf.mat.file.path <- file.path(tfs.matrix.dir, paste(tf, "matrix.tsv", sep="."))

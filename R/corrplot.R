@@ -15,6 +15,11 @@ script.basename <- dirname(script.name)
 today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
 
 #
+# Package install and load
+#
+source(file.path(".", script.basename, "setup.R"))
+
+#
 # Create directories to save results
 #
 data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE))
@@ -31,7 +36,7 @@ dir.create(tfs.corrplot.dir, showWarnings=FALSE, recursive=TRUE)
 # Load matrix
 #
 all.matrix.rds.file <- file.path(rds.dir, "all.matrix.rds")
-if (!file.exist(all.matrix.rds.file)) {
+if (!file.exists(all.matrix.rds.file)) {
   source(file.path(".", script.basename, "qugacomp.R"))
 }
 
@@ -69,7 +74,7 @@ x <- pforeach(i = 1:NROW(tfs.vec)) ({
 
   # Create or load matrix from RDS
   tf.rds.file <- file.path(tfs.rds.dir, paste(tf, "rdfs", sep="."))
-  if(!file.exist(tf.rds.file)) {
+  if(!file.exists(tf.rds.file)) {
     print(paste("Data for", tf, "is missing in", tfs.rds.dir))
   } else {
     tf.mat <- readRDS(tf.rds.file)
