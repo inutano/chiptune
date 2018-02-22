@@ -35,6 +35,15 @@ BASEDIR="$(cd $(dirname ${0}) && pwd -P)"
 data_dir="${BASEDIR}/../data/$(date_cmd +%Y%m%d-%H%M)"
 mkdir -p "${data_dir}"
 
+reference_dir="${data_dir}/reference"
+mkdir -p "${reference_dir}"
+
+metadata_dir="${data_dir}/metadata"
+mkdir -p "${metadata_dir}"
+
+log_dir="${data_dir}/log"
+mkdir -p "${log_dir}"
+
 bed_dir="${data_dir}/bed"
 mkdir -p "${bed_dir}"
 
@@ -42,7 +51,7 @@ mkdir -p "${bed_dir}"
 # Get genome length file from github
 #
 hg19_chrominfo_url="http://hgdownload.cse.ucsc.edu/goldenpath/hg19/database/chromInfo.txt.gz"
-curl -s "${hg19_chrominfo_url}" | gunzip | awk -F '\t' '$1 ~ /^chr(.|..)$/ { print $1 "\t" $2 }' > "${bed_dir}/hg19.info"
+curl -s "${hg19_chrominfo_url}" | gunzip | awk -F '\t' '$1 ~ /^chr(.|..)$/ { print $1 "\t" $2 }' > "${reference_dir}/hg19.info"
 
 #
 # Prepare the list of experiments
@@ -52,26 +61,29 @@ curl -s "${hg19_chrominfo_url}" | gunzip | awk -F '\t' '$1 ~ /^chr(.|..)$/ { pri
 experimentList_url="http://dbarchive.biosciencedbc.jp/kyushu-u/metadata/experimentList.tab"
 
 # Select ChIP-seq experiments of human TFs
-datalist_path="${data_dir}/data.tsv"
+datalist_path="${metadata_dir}/data.tsv"
 curl -s ${experimentList_url} | awk -F'\t' '$2 == "hg19" && $3 == "TFs and others"' > "${datalist_path}"
-cat "${datalist_path}" | awk -F'\t' 'BEGIN{ OFS="\t" }{ print $1, $4, $5, $6 }' > "${data_dir}/data.reduced.tsv"
 
 # The TF experiment ranking
-ranking_path="${data_dir}/ranking.txt"
+ranking_path="${metadata_dir}/ranking.txt"
 cat "${datalist_path}" | cut -f 4 | sort | uniq -c | sort -nr > "${ranking_path}"
 
 # List to download
-tfs_to_download="${data_dir}/tfs_download.txt"
+tfs_to_download="${metadata_dir}/tfs_downloaded.txt"
 cat "${ranking_path}" | awk '$0=$2' | head -n ${NumTFs} > "${tfs_to_download}"
 
-# Get experiment list
-experiments_to_download="${data_dir}/exps_download.txt"
+# Get list of experiment IDs to download with metadata
+experiments_to_download="${metadata_dir}/exps_downloaded.tsv"
 cat "${tfs_to_download}" | while read tf; do
   cat "${datalist_path}" | awk -v tf="${tf}" -F '\t' '$4 == tf' | head -n ${NumTFs_EACH}
 done > "${experiments_to_download}"
 
+# Reduce metadata for bed files to be downloaded
+reduced_experiments_metadata="${metadata_dir}/exps_downloaded.reduced.tsv"
+cat "${experiments_to_download}" | awk -F'\t' 'BEGIN{ OFS="\t" }{ print $1, $4, $5, $6 }' > "${reduced_experiments_metadata}"
+
 # Create lftp script and exec to download bed files
-lftp_script_path="${data_dir}/download_bed.lftp"
+lftp_script_path="${log_dir}/download_bed.lftp"
 FTP_base="ftp://ftp.biosciencedbc.jp/data/chip-atlas/data/hg19/eachData/bed${QVAL}/"
 cat "${experiments_to_download}" |\
   awk -F '\t' -v qval="${QVAL}" -v ftp="${FTP_base}" -v outdir="${bed_dir}" 'BEGIN{ print "open " ftp } { print "pget -n 8 -O " outdir " " $1 "." qval ".bed" }' > "${lftp_script_path}"

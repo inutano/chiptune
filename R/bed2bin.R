@@ -19,7 +19,8 @@ source(file.path(".", script.basename, "setup.R"))
 #
 data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE))
 bed.data.dir <- file.path(data.dir, "bed")
-genome.length.file <- file.path(bed.data.dir, "hg19.info")
+ref.data.dir <- file.path(data.dir, "reference")
+genome.length.file <- file.path(ref.data.dir, "hg19.info")
 
 rds.dir <- file.path(data.dir, "rds")
 dir.create(rds.dir, showWarnings=FALSE, recursive=TRUE)

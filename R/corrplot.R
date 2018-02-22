@@ -23,6 +23,7 @@ source(file.path(".", script.basename, "setup.R"))
 # Create directories to save results
 #
 data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE))
+metadata.dir <- file.path(data.dir, "metadata")
 
 rds.dir <- file.path(data.dir, "rds")
 tfs.rds.dir <- file.path(rds.dir, "eachTF")
@@ -63,10 +64,10 @@ invisible(dev.off())
 #
 
 # Get the list of TFs
-tfs.vec <- readLines(file.path(data.dir, "tfs_download.txt"))
+tfs.vec <- readLines(file.path(metadata.dir, "tfs_downloaded.txt"))
 
 # Get the metadata table
-metadata <- read.delim(file.path(data.dir, "data.reduced.tsv"), header=FALSE)
+metadata <- read.delim(file.path(metadata.dir, "exps_downloaded.reduced.tsv"), header=FALSE)
 
 # Draw plot for each TF
 x <- pforeach(i = 1:NROW(tfs.vec)) ({
