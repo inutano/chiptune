@@ -70,7 +70,7 @@ cat "${datalist_path}" | cut -f 4 | sort | uniq -c | sort -nr > "${ranking_path}
 
 # List to download
 tfs_to_download="${metadata_dir}/tfs_downloaded.txt"
-cat "${ranking_path}" | awk '$0=$2' | head -n ${NumTFs} > "${tfs_to_download}"
+cat "${ranking_path}" | awk '{ $1 = ""; print substr($0, 2, length($0)) }' | head -n ${NumTFs} > "${tfs_to_download}"
 
 # Get list of experiment IDs to download with metadata
 experiments_to_download="${metadata_dir}/exps_downloaded.tsv"
