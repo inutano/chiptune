@@ -75,6 +75,5 @@ pLoadAndBin <- function(data.dir, exps.vec, glength.file, fat.num){
 bin.rds.file <- file.path(rds.dir, "bin.rds")
 if (!file.exists(bin.rds.file)) {
   saveRDS(pLoadAndBin(bed.data.dir, experiments, genome.length.file, fat.num), bin.rds.file)
+  print(paste(exps.num, "bed files loaded and saved at", bin.rds.file))
 }
-
-print(paste(exps.num, "bed files loaded and saved at", bin.rds.file))
