@@ -20,21 +20,13 @@ today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
 source(file.path(".", script.basename, "setup.R"))
 
 #
-# Load bin data
+# Create directories to save results
 #
-source(file.path(".", script.basename, "bed2bin.R"))
+data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE))
 
-#
-# Create a directory to save results
-#
+rds.dir <- file.path(data.dir, "rds")
 tfs.rds.dir <- file.path(rds.dir, "eachTF")
 dir.create(tfs.rds.dir, showWarnings=FALSE, recursive=TRUE)
-
-analysis.dir <- file.path(data.dir, "analysis", today)
-dir.create(analysis.dir, showWarnings=FALSE, recursive=TRUE)
-
-corrplot.dir <- file.path(analysis.dir, "corrplot")
-dir.create(corrplot.dir, showWarnings=FALSE, recursive=TRUE)
 
 matrix.dir <- file.path(data.dir, "matrix")
 tfs.matrix.dir <- file.path(matrix.dir, "eachTF")
@@ -74,40 +66,21 @@ createCorrMatrix <- function(exps.vec, bin.list){
 
 all.matrix.rds.file <- file.path(rds.dir, "all.matrix.rds")
 if (!file.exists(all.matrix.rds.file)) {
+  # Load bin file, run bed2bin if not rds file exists
+  bin.rds.file <- file.path(rds.dir, "bin.rds")
+  if (!file.exist(bin.rds.file)) {
+    source(file.path(".", script.basename, "bed2bin.R"))
+  }
   bin.list <- readRDS(bin.rds.file)
   saveRDS(createCorrMatrix(experiments, bin.list), all.matrix.rds.file)
 
+  # Save matrix
   mat.cor.file <- file.path(matrix.dir, "all.matrix.tsv")
   write.table(mat.cor, file=mat.cor.file, sep="\t", quote=FALSE)
-
-  print(paste("Correlation calculated. Matrix saved at", mat.cor.file))
 }
-mat.cor <- readRDS(all.matrix.rds.file)
 
 #
-# Plot all for all
-#
-
-# max/min
-mat.cor.max <- max(mat.cor[upper.tri(mat.cor, diag=FALSE)])
-mat.cor.min <- min(mat.cor[upper.tri(mat.cor, diag=FALSE)])
-
-# Draw plot and save to pdf
-output.pdf.name <- paste("all", "corrplot", "pdf", sep=".")
-output.pdf.path <- file.path(corrplot.dir, output.pdf.name)
-pdf(output.pdf.path)
-corrplot(mat.cor,
-  method="circle",
-  diag=FALSE,
-  cl.lim=c(mat.cor.min, 1),
-  cl.ratio=0.2
-)
-invisible(dev.off())
-
-print(paste("The plot saved at", output.pdf.path))
-
-#
-# Plot per TF
+# Save submatrix for each tf
 #
 
 # Get the list of TFs
@@ -131,23 +104,6 @@ x <- pforeach(i = 1:NROW(tfs.vec)) ({
     tf.mat.file.path <- file.path(tfs.matrix.dir, paste(tf, "matrix.tsv", sep="."))
     write.table(tf.mat, file=tf.mat.file.path, sep="\t", quote=FALSE)
   }
-  tf.mat <- readRDS(tf.rds.file)
-
-  # Plot
-  tf.mat.max <- max(tf.mat[upper.tri(tf.mat, diag=FALSE)])
-  tf.mat.min <- min(tf.mat[upper.tri(tf.mat, diag=FALSE)])
-
-  # Output PDF file path
-  tf.output.pdf.name <- paste(tf, "corrplot", "pdf", sep=".")
-  tf.output.pdf.path <- file.path(corrplot.dir, tf.output.pdf.name)
-
-  # Draw plot and save
-  pdf(tf.output.pdf.path)
-  corrplot(tf.mat,
-    method="circle",
-    diag=FALSE,
-    cl.lim=c(tf.mat.min, 1),
-    cl.ratio=0.2
-  )
-  invisible(dev.off())
 })
+
+print(paste("Correlation coefficient calculated. Matrix saved at", matrix.dir))
