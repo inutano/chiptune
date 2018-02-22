@@ -17,7 +17,7 @@ source(file.path(".", script.basename, "setup.R"))
 #
 # Path to the data directory (use latest-downloaded data)
 #
-data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE))
+data.dir <- file.path(".", script.basename, "..", "data", system(paste("ls -t ", file.path(".", script.basename, "..", "data"), " | head -1", sep=""), intern=TRUE))
 bed.data.dir <- file.path(data.dir, "bed")
 ref.data.dir <- file.path(data.dir, "reference")
 genome.length.file <- file.path(ref.data.dir, "hg19.info")

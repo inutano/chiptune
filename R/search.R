@@ -34,7 +34,7 @@ today <- format(as.POSIXlt(Sys.time(), "GMT-9"), "%Y%m%d-%H%M")
 #
 # Create a directory to save results
 #
-data.dir <- file.path(".", script.basename, "..", "data", system("ls -t data | head -1", intern=TRUE))
+data.dir <- file.path(".", script.basename, "..", "data", system(paste("ls -t ", file.path(".", script.basename, "..", "data"), " | head -1", sep=""), intern=TRUE))
 metadata.dir <- file.path(data.dir, "metadata")
 rds.dir <- file.path(data.dir, "rds")
 
