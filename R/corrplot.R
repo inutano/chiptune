@@ -74,7 +74,7 @@ x <- pforeach(i = 1:NROW(tfs.vec)) ({
   tf <- tfs.vec[i]
 
   # Create or load matrix from RDS
-  tf.rds.file <- file.path(tfs.rds.dir, paste(tf, "rdfs", sep="."))
+  tf.rds.file <- file.path(tfs.rds.dir, paste(tf, "rds", sep="."))
   if(!file.exists(tf.rds.file)) {
     print(paste("Data for", tf, "is missing in", tfs.rds.dir))
   } else {
