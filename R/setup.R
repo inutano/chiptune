@@ -44,4 +44,11 @@ if (!require("corrplot")) {
 }
 library("corrplot")
 
+# ggplot2
+if (!require("ggplot2")) {
+  install.packages("ggplot2", repos="https://cran.ism.ac.jp/")
+}
+library("ggplot2")
+
+
 sessionInfo()
