@@ -40,7 +40,6 @@ all.matrix.rds.file <- file.path(rds.dir, "all.matrix.rds")
 if (!file.exists(all.matrix.rds.file)) {
   source(file.path(".", script.basename, "qugacomp.R"))
 }
-
 all.mat <- readRDS(all.matrix.rds.file)
 
 #
@@ -50,8 +49,7 @@ tfs.vec <- readLines(file.path(metadata.dir, "tfs_downloaded.txt"))
 metadata.df <- read.delim(file.path(metadata.dir, "exps_downloaded.reduced.tsv"), header=FALSE)
 colnames(metadata.df) <- c("expid","tf","celltypeclass","celltype")
 
-# for testing with small number of items
-tfs.vec <- tfs.vec[1:5]
+# Remove TFs with fewer than 3 experiments
 tfs.vec <- tfs.vec[!is.na(tfs.vec[summary(metadata.df$tf)[tfs.vec] > 2])]
 
 all.mean.sd <- pforeach(i = 1:NROW(tfs.vec), .combine=rbind) ({
@@ -67,19 +65,21 @@ all.mean.sd <- pforeach(i = 1:NROW(tfs.vec), .combine=rbind) ({
     vs.diffTF <- all.mat[rownames(all.mat) %in% exps.diffTF, colnames(all.mat) == expid]
 
     rbind(
-      c(expid, tf, "same", mean(vs.sameTF), sd(vs.sameTF)),
-      c(expid, tf, "diff", mean(vs.diffTF), sd(vs.diffTF))
+      c(expid, tf, "same", mean(vs.sameTF), min(vs.sameTF), max(vs.sameTF), sd(vs.sameTF)),
+      c(expid, tf, "diff", mean(vs.diffTF), min(vs.diffTF), max(vs.diffTF), sd(vs.diffTF))
     )
   }
 })
 all.mean.sd <- as.data.frame(all.mean.sd)
-colnames(all.mean.sd) <- c("expid", "tf", "vs", "mean", "sd")
+colnames(all.mean.sd) <- c("expid", "tf", "vs", "mean", "min", "max", "sd")
 
 pforeach(i = 1:NROW(tfs.vec)) ({
   tf = tfs.vec[i]
   df <- all.mean.sd[all.mean.sd$tf == tf,]
 
   df$mean <- as.numeric(as.character(df$mean))
+  df$min <- as.numeric(as.character(df$min))
+  df$max <- as.numeric(as.character(df$max))
   df$sd <- as.numeric(as.character(df$sd))
 
   # Output PDF file path
@@ -92,8 +92,8 @@ pforeach(i = 1:NROW(tfs.vec)) ({
     lower = mean - sd,
     upper = mean + sd,
     middle = mean,
-    ymin = mean - 3*sd,
-    ymax = mean + 3*sd,
+    ymin = min,
+    ymax = max,
     ),
     stat="identity"
   )
@@ -101,38 +101,3 @@ pforeach(i = 1:NROW(tfs.vec)) ({
   p <- p + theme(axis.text.x = element_text(angle = 45, hjust = 1))
   ggsave(file=tf.output.pdf.path, plot=p, width=1080, unit="mm")
 })
-
-# Get the list of TFs
-# tfs.vec <- readLines(file.path(metadata.dir, "tfs_downloaded.txt"))
-#
-# tfs.mean.sd.mat <- pforeach(i = 1:NROW(tfs.vec), .combine=rbind) ({
-#   tf <- tfs.vec[i]
-#
-#   # Create or load matrix from RDS
-#   tf.rds.file <- file.path(tfs.rds.dir, paste(tf, "rds", sep="."))
-#   if(!file.exists(tf.rds.file)) {
-#     c(tf, NA, NA)
-#   } else {
-#     tf.mat <- readRDS(tf.rds.file)
-#     tf.values.vec <- tf.mat[upper.tri(tf.mat, diag=FALSE)]
-#     c(tf, mean(tf.values.vec), sd(tf.values.vec))
-#   }
-# })
-# tfs.mean.sd.df <- as.data.frame(tfs.mean.sd.mat)
-# colnames(tfs.mean.sd.df) <- c("TF", "mean", "sd")
-#
-# tfs.mean.sd.df <- tfs.mean.sd.df[!is.na(tfs.mean.sd.df$sd),]
-# tfs.mean.sd.df$mean <- as.numeric(as.character(tfs.mean.sd.df$mean))
-# tfs.mean.sd.df$sd <- as.numeric(as.character(tfs.mean.sd.df$sd))
-#
-# p <- ggplot(tfs.mean.sd.df, aes(x = as.factor(TF)))
-# p <- p + geom_boxplot(aes(
-#   lower = mean - sd,
-#   upper = mean + sd,
-#   middle = mean,
-#   ymin = mean - 3*sd,
-#   ymax = mean + 3*sd,
-#   ),
-#   stat="identity"
-# )
-# ggsave(file="test.pdf", plot=p)
