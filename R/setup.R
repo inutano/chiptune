@@ -15,12 +15,12 @@ script.basename <- dirname(script.name)
 
 # QuGAcomp
 if (!require("QuGAcomp")) {
-  update.packages(checkBuilt=TRUE, ask=FALSE, repos="https://cran.ism.ac.jp/")
+  update.packages(checkBuilt=TRUE, ask=FALSE, repos="https://cran.r-project.org/")
   # GenomicRanges from Bioconductor
   source("https://bioconductor.org/biocLite.R")
   biocLite("GenomicRanges")
   # Install curl package
-  install.packages("curl", repos="https://cran.ism.ac.jp/")
+  install.packages("curl", repos="https://cran.r-project.org/")
   library("curl")
   # QuGAcomp from source file
   qugacomp.package.url <- "https://github.com/dritoshi/QuGAcomp/raw/master/QuGAcomp_0.99.2.tar.gz"
@@ -33,20 +33,20 @@ library("QuGAcomp")
 
 # pforeach
 if (!require("pforeach")) {
-  install.packages("devtools", repos="https://cran.ism.ac.jp/")
+  install.packages("devtools", repos="https://cran.r-project.org/")
   devtools::install_github("hoxo-m/pforeach")
 }
 library("pforeach")
 
 # Corrplot
 if (!require("corrplot")) {
-  install.packages("corrplot", repos="https://cran.ism.ac.jp/")
+  install.packages("corrplot", repos="https://cran.r-project.org/")
 }
 library("corrplot")
 
 # ggplot2
 if (!require("ggplot2")) {
-  install.packages("ggplot2", repos="https://cran.ism.ac.jp/")
+  install.packages("ggplot2", repos="https://cran.r-project.org/")
 }
 library("ggplot2")
 
