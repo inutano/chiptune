@@ -1,0 +1,95 @@
+#!/usr/bin/env Rscript
+
+# QuGAcomp
+if (!require("QuGAcomp")) {
+  update.packages(checkBuilt=TRUE, ask=FALSE, repos="https://cran.r-project.org/")
+  # GenomicRanges from Bioconductor
+  source("https://bioconductor.org/biocLite.R")
+  biocLite("GenomicRanges")
+  # Install curl package
+  install.packages("curl", repos="https://cran.r-project.org/")
+  library("curl", quietly=TRUE)
+  # QuGAcomp from source file
+  qugacomp.package.url <- "https://github.com/dritoshi/QuGAcomp/raw/master/QuGAcomp_0.99.2.tar.gz"
+  qugacomp.package.loc <- file.path(".", basename(qugacomp.package.url))
+  curl_download(qugacomp.package.url, qugacomp.package.loc)
+  install.packages(qugacomp.package.loc)
+  file.remove(qugacomp.package.loc)
+}
+library("QuGAcomp", quietly=TRUE)
+
+# argparser
+if (!require("argparser")) {
+  install.packages("argparser", repos="https://cran.r-project.org/")
+}
+library(argparser, quietly=TRUE)
+
+# Create a parser
+p <- arg_parser("Convert bed file into binning")
+
+# Add command line arguments
+p <- add_argument(p, "--bed", help="path to bed file", type="character")
+p <- add_argument(p, "--genomeInfo", help="genome info file", type="character")
+p <- add_argument(p, "--fat", help="length of peak expansion", default=200)
+p <- add_argument(p, "--bin", help="length of binning", default=500)
+p <- add_argument(p, "--outdir", help="output directory", type="character", default=".")
+
+# Parse the command line arguments
+argv <- parse_args(p)
+
+# Check arguments
+if (is.na(argv$bed)) {
+	stop("No bed file specified")
+}
+
+if (is.na(argv$genomeInfo)) {
+	stop("No genome info file specified")
+}
+
+# Bind arguments to variables
+bed.file.path <- argv$bed
+bed.file.name <- tools::file_path_sans_ext(basename(bed.file.path))
+glength.file.path <- argv$genomeInfo
+fat.num <- argv$fat
+bin.length <- argv$bin
+out.dir.path <- argv$outdir
+bin.rds.file.path <- file.path(out.dir.path, paste(bed.file.name, ".rds", sep=""))
+
+# Do work based on the passed arguments
+print(paste("Bed file:", bed.file.path))
+print(paste("Genome info file:", glength.file.path))
+print(paste("Peak expansion length:", fat.num))
+print(paste("Bin length:", bin.length))
+print(paste("Output directory:", out.dir.path))
+
+# Load files and binning peak data
+loadAndBin <- function(bed.file.path, glength.file.path, fat.num, bin.length){
+  flatRleList(
+    lapply(
+      coverage(
+        unifyStrand(
+          fat(
+            loadBedFile(
+              bed.file.path,
+              glength.file.path
+            ),
+            fat.num
+          )
+        )
+      ),
+      function(x)rleBinning(x, bin.length)
+    )
+  )
+}
+
+# Bin and save
+saveRDS(
+  loadAndBin(
+    bed.file.path,
+    glength.file.path,
+    fat.num,
+    bin.length
+  ),
+  bin.rds.file.path
+)
+print(paste("Data saved at:", bin.rds.file.path))
